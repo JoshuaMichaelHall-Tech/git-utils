@@ -36,6 +36,21 @@ Runs a script on all first-level subdirectories, with automatic input handling a
 - Captures user input and offers to reuse answers across repositories
 - Reports success/failure statistics
 
+**Example Usage:**
+```zsh
+# Run with manual confirmation for each saved response
+cd ~/repos
+./run-on-all-repos.sh git-clean-system-files.sh
+
+# Run with automatic response saving (saves all inputs without asking)
+cd ~/repos
+./run-on-all-repos.sh git-prune-merged-branches.sh --auto-respond
+
+# Generate logs of all pull operations
+cd ~/repos
+./run-on-all-repos.sh pull-from-github.sh
+```
+
 ### git-clean-system-files.sh
 
 Removes common system files from Git repositories and updates `.gitignore` to prevent them from being tracked.
@@ -50,12 +65,40 @@ Removes common system files from Git repositories and updates `.gitignore` to pr
 - Linux: `.directory`, backup files (`*~`), etc.
 - Editors: Vim swap files (`.*.swp`), etc.
 
+**Example Usage:**
+```zsh
+# Clean a single repository
+cd ~/repos/my-project
+./git-clean-system-files.sh
+
+# View files that would be removed without actually removing them
+cd ~/repos/my-project
+./git-clean-system-files.sh --dry-run
+
+# Clean and update .gitignore
+cd ~/repos/my-project
+./git-clean-system-files.sh --update-gitignore
+```
+
 ### flatten_files.sh
 
 Moves all files from a directory and its subdirectories into a single directory.
 
 ```zsh
 ./flatten_files.sh
+```
+
+**Example Usage:**
+```zsh
+# Flatten files in the current directory
+cd ~/Documents/nested-folders
+./flatten_files.sh
+
+# Flatten files in a specific directory
+./flatten_files.sh ~/Pictures/vacation-photos
+
+# Flatten with a custom naming scheme to prevent conflicts
+./flatten_files.sh --rename-prefix="folder-"
 ```
 
 ## Repository Management Scripts
@@ -73,6 +116,21 @@ Identifies and archives or deletes inactive branches.
 - Archives them to refs/archived/ or deletes them with confirmation
 - Protects system branches (main, master, develop, etc.)
 
+**Example Usage:**
+```zsh
+# Archive branches not modified in the last 3 months
+cd ~/repos/my-project
+./git-archive-old-branches.sh
+
+# Archive branches older than 6 months
+cd ~/repos/my-project
+./git-archive-old-branches.sh 6
+
+# Delete branches older than 12 months
+cd ~/repos/my-project
+./git-archive-old-branches.sh 12 --delete
+```
+
 ### git-prune-merged-branches.sh
 
 Removes branches that have been merged into the main branch.
@@ -85,6 +143,21 @@ Removes branches that have been merged into the main branch.
 - Identifies fully merged branches
 - Offers batch or selective deletion
 - Optionally removes remote branches as well
+
+**Example Usage:**
+```zsh
+# Prune branches merged into main
+cd ~/repos/my-project
+./git-prune-merged-branches.sh
+
+# Prune branches merged into development
+cd ~/repos/my-project
+./git-prune-merged-branches.sh development
+
+# Prune branches merged into a specific feature branch
+cd ~/repos/my-project
+./git-prune-merged-branches.sh feature/authentication
+```
 
 ### git-cleanup-large-files.sh
 
@@ -99,6 +172,21 @@ Finds and removes large files from Git history.
 - Offers to remove them using git-filter-branch or BFG Repo Cleaner
 - Provides detailed size information
 
+**Example Usage:**
+```zsh
+# Find files larger than 10MB (default)
+cd ~/repos/my-project
+./git-cleanup-large-files.sh
+
+# Find files larger than 5MB
+cd ~/repos/my-project
+./git-cleanup-large-files.sh 5
+
+# Use with run-on-all-repos to scan all repositories
+cd ~/repos
+./run-on-all-repos.sh git-cleanup-large-files.sh
+```
+
 ### git-fix-author.sh
 
 Corrects author information in Git commits.
@@ -112,6 +200,21 @@ Corrects author information in Git commits.
 - Fixes all commits, specific commits, or commits by a specific author
 - Handles complex Git filter-branch operations
 
+**Example Usage:**
+```zsh
+# Fix author info interactively
+cd ~/repos/my-project
+./git-fix-author.sh
+
+# Fix author info for all commits
+cd ~/repos/my-project
+./git-fix-author.sh --all
+
+# Fix author info for specific commits
+cd ~/repos/my-project
+./git-fix-author.sh --specific
+```
+
 ### git-summarize-changes.sh
 
 Creates reports of changes between Git references.
@@ -124,6 +227,21 @@ Creates reports of changes between Git references.
 - Generates formatted changelog between two references
 - Categorizes commits (features, fixes, documentation, etc.)
 - Creates statistics on contributors, files changed, and lines added/removed
+
+**Example Usage:**
+```zsh
+# Create a markdown summary between the current state and the latest tag
+cd ~/repos/my-project
+./git-summarize-changes.sh $(git describe --tags --abbrev=0) HEAD
+
+# Create an HTML report for a release
+cd ~/repos/my-project
+./git-summarize-changes.sh v1.0.0 v2.0.0 --html
+
+# Generate a report between two specific commits
+cd ~/repos/my-project
+./git-summarize-changes.sh a1b2c3d4 e5f6g7h8 --txt
+```
 
 ### git-backup-repo.sh
 
@@ -139,6 +257,25 @@ Creates full backups of Git repositories.
 - Implements retention policies
 - Optionally uploads to remote storage (rclone, SCP)
 
+**Example Usage:**
+```zsh
+# Create a backup with default settings
+cd ~/repos/my-project
+./git-backup-repo.sh
+
+# Specify a backup directory
+cd ~/repos/my-project
+./git-backup-repo.sh ~/backups/git-repos
+
+# Create a backup and upload it to remote storage
+cd ~/repos/my-project
+./git-backup-repo.sh --upload
+
+# Back up all repositories
+cd ~/repos
+./run-on-all-repos.sh git-backup-repo.sh ~/backups/git-repos
+```
+
 ### git-setup-hooks.sh
 
 Installs useful Git hooks for code quality.
@@ -152,6 +289,21 @@ Installs useful Git hooks for code quality.
 - Configures commit message templates
 - Adds safeguards for protected branches
 - Supports multiple programming languages
+
+**Example Usage:**
+```zsh
+# Set up hooks with automatic language detection
+cd ~/repos/my-project
+./git-setup-hooks.sh
+
+# Set up hooks for a specific language
+cd ~/repos/my-project
+./git-setup-hooks.sh ruby
+
+# Set up hooks for all repositories
+cd ~/repos
+./run-on-all-repos.sh git-setup-hooks.sh
+```
 
 ## Remote Sync Scripts
 
@@ -168,6 +320,17 @@ Updates a local repository from its GitHub remote.
 - Manages branches that don't exist on remote
 - Safely restores stashed changes after pull
 
+**Example Usage:**
+```zsh
+# Pull updates for the current repository
+cd ~/repos/my-project
+./pull-from-github.sh
+
+# Pull updates for all repositories
+cd ~/repos
+./run-on-all-repos.sh pull-from-github.sh
+```
+
 ### push-to-github.sh
 
 Updates a GitHub repository from local changes.
@@ -182,6 +345,17 @@ Updates a GitHub repository from local changes.
 - Detects conflicts with remote changes
 - Handles upstream configuration
 
+**Example Usage:**
+```zsh
+# Push changes from the current repository
+cd ~/repos/my-project
+./push-to-github.sh
+
+# Push changes from multiple repositories (be careful!)
+cd ~/repos
+./run-on-all-repos.sh push-to-github.sh --auto-respond
+```
+
 ## Input Handling
 
 ### input-capture.sh
@@ -189,6 +363,13 @@ Updates a GitHub repository from local changes.
 Standalone script for running commands with input capturing across repositories.
 
 ```zsh
+./input-capture.sh
+```
+
+**Example Usage:**
+```zsh
+# Run the script and follow the interactive prompts
+cd ~/repos
 ./input-capture.sh
 ```
 
@@ -207,32 +388,28 @@ Standalone script for running commands with input capturing across repositories.
 
 3. Optionally, add the directory to your PATH for easy access:
    ```zsh
-   echo 'export PATH="$PATH:$(pwd)"' >> ~/.zshrc
+   echo 'export PATH="$PATH:$HOME/tech_repos/git-repository-utilities"' >> ~/.zshrc
    source ~/.zshrc
    ```
 
-## Usage Examples
+## Credits and Resources
 
-### Cleaning up system files in all repositories
+This project utilizes and references several external tools and resources:
 
-```zsh
-cd ~/repos
-./run-on-all-repos.sh git-clean-system-files.sh
-```
+- **BFG Repo-Cleaner**: The `git-cleanup-large-files.sh` script offers integration with the BFG Repo-Cleaner by Roberto Tyley, a faster alternative to git-filter-branch for removing large files.
+  - Website: [https://rtyley.github.io/bfg-repo-cleaner/](https://rtyley.github.io/bfg-repo-cleaner/)
+  - License: GPL-3.0
 
-### Archiving old branches in multiple repositories
+- **Git Documentation**: Many scripts are based on best practices from the official Git documentation.
+  - Website: [https://git-scm.com/doc](https://git-scm.com/doc)
 
-```zsh
-cd ~/repos
-./run-on-all-repos.sh git-archive-old-branches.sh 6 --auto-respond
-```
+- **ShellCheck**: Recommended for validating shell scripts, and used in the `git-setup-hooks.sh` script.
+  - Website: [https://www.shellcheck.net/](https://www.shellcheck.net/)
+  - License: GPL-3.0
 
-### Pulling updates for all repositories
-
-```zsh
-cd ~/repos
-./run-on-all-repos.sh pull-from-github.sh
-```
+- **rclone**: Used in the `git-backup-repo.sh` script for cloud storage uploads.
+  - Website: [https://rclone.org/](https://rclone.org/)
+  - License: MIT
 
 ## Requirements
 
