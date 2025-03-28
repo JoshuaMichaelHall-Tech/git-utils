@@ -29,9 +29,21 @@ if [[ "$2" == "--upload" ]]; then
   echo "⚠️  UPLOAD MODE ENABLED: Backup will be uploaded after creation"
 fi
 
-# Create backup directory if it doesn't exist
-mkdir -p "$BACKUP_DIR"
-echo "📁 Backup directory: $BACKUP_DIR"
+# Check if backup directory exists and create if needed
+if [[ ! -d "$BACKUP_DIR" ]]; then
+  echo "📁 Backup directory does not exist: $BACKUP_DIR"
+  read "create_dir?Create this directory? (y/n): "
+  
+  if [[ "$create_dir" =~ ^[Yy]$ ]]; then
+    mkdir -p "$BACKUP_DIR"
+    echo "✅ Created backup directory: $BACKUP_DIR"
+  else
+    echo "❌ Backup directory not created. Exiting."
+    exit 1
+  fi
+else
+  echo "📁 Backup directory: $BACKUP_DIR"
+fi
 
 # Create timestamp
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
