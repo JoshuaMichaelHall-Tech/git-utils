@@ -373,6 +373,36 @@ cd ~/repos
 ./input-capture.sh
 ```
 
+### force-push-to-remote.sh
+
+Safely force-pushes changes to a remote repository with backup and confirmation steps.
+
+```zsh
+./force-push-to-remote.sh [remote-name] [--skip-backup]
+```
+
+**Features:**
+- Creates a backup before pushing
+- Shows changes that will be pushed
+- Requires explicit confirmation
+- Verifies repository and remote
+- Reports success or failure
+
+**Example Usage:**
+```zsh
+# Basic usage (pushes to origin)
+cd ~/repos/my-project
+./force-push-to-remote.sh
+
+# Push to a different remote
+cd ~/repos/my-project
+./force-push-to-remote.sh upstream
+
+# Skip the backup creation
+cd ~/repos/my-project
+./force-push-to-remote.sh origin --skip-backup
+```
+
 ## Installation
 
 1. Clone this repository:
@@ -411,7 +441,51 @@ This project utilizes and references several external tools and resources:
   - Website: [https://rclone.org/](https://rclone.org/)
   - License: MIT
 
-## Known Issues and Workarounds
+## Using git-fix-author.sh with force-push-to-remote.sh
+
+When you run `git-fix-author.sh` to correct author information, it rewrites Git history which requires a force push to update remote repositories. The `force-push-to-remote.sh` script provides a safer way to perform this operation.
+
+### Single Repository Workflow:
+
+1. Fix author information:
+   ```zsh
+   cd ~/repos/my-project
+   ./git-fix-author.sh --all
+   ```
+
+2. Review the changes:
+   ```zsh
+   git log --oneline
+   ```
+
+3. Force push with safety measures:
+   ```zsh
+   ./force-push-to-remote.sh
+   ```
+
+### Multiple Repositories Workflow:
+
+1. First, fix author information across all repositories:
+   ```zsh
+   cd ~/repos
+   ./run-on-all-repos.sh fix-author-all.sh --auto-respond
+   ```
+
+2. Then, carefully force push each repository:
+   ```zsh
+   # Option 1: Review and push each repository individually (recommended)
+   cd ~/repos/repo1
+   ./force-push-to-remote.sh
+   
+   cd ~/repos/repo2
+   ./force-push-to-remote.sh
+   
+   # Option 2: Force push all repositories (use with caution!)
+   cd ~/repos
+   ./run-on-all-repos.sh force-push-to-remote.sh --auto-respond
+   ```
+
+> ⚠️ **Warning:** Force pushing multiple repositories automatically with `run-on-all-repos.sh` is dangerous and should only be done if you're certain about all the changes. It's recommended to review and force push each repository individually.
 
 ### Passing Arguments to Scripts with run-on-all-repos.sh
 
