@@ -403,6 +403,36 @@ cd ~/repos/my-project
 ./force-push-to-remote.sh origin --skip-backup
 ```
 
+### git-add-commit-push.sh
+
+Combines add, commit, and push operations into a single interactive workflow.
+
+```zsh
+./git-add-commit-push.sh [commit-message] [--all]
+```
+
+**Features:**
+- Flexible add options (all, tracked only, specific files, interactive)
+- Interactive status checks and confirmations
+- Handles upstream branch configuration
+- Detects and addresses potential conflicts
+- Provides clear feedback at each step
+
+**Example Usage:**
+```zsh
+# Basic interactive usage
+cd ~/repos/my-project
+./git-add-commit-push.sh
+
+# Provide commit message directly
+cd ~/repos/my-project
+./git-add-commit-push.sh "feat: add user authentication"
+
+# Add all changes and provide commit message
+cd ~/repos/my-project
+./git-add-commit-push.sh "fix: resolve navigation bug" --all
+```
+
 ## Installation
 
 1. Clone this repository:
@@ -422,7 +452,57 @@ cd ~/repos/my-project
    source ~/.zshrc
    ```
 
-## Credits and Resources
+## Writing Good Commit Messages
+
+This project follows the Conventional Commits specification for commit messages. Good commit messages make your repository history more valuable and improve collaboration.
+
+### Commit Message Format
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+### Types
+
+- **feat**: A new feature
+- **fix**: A bug fix
+- **docs**: Documentation changes
+- **style**: Formatting changes (white-space, formatting, etc.)
+- **refactor**: Code change that neither fixes a bug nor adds a feature
+- **perf**: Code change that improves performance
+- **test**: Adding or modifying tests
+- **chore**: Changes to the build process or auxiliary tools
+- **ci**: Changes to CI configuration files and scripts
+
+### Guidelines
+
+1. **Be concise and specific**:
+   - Good: `feat(auth): add email validation to login form`
+   - Bad: `updated some files`
+
+2. **Use imperative mood**:
+   - Good: `fix: remove unused variables`
+   - Bad: `fixed unused variables`
+
+3. **First line should be 50 characters or less**
+
+4. **Explain "why" in the body**, not just "what"
+
+5. **Reference issues/tickets in footer**:
+   ```
+   fix(nav): ensure dropdown closes on blur
+
+   Previously the dropdown would remain open when clicking elsewhere,
+   causing confusion and potential data loss.
+
+   Fixes #123
+   ```
+
+The `git-add-commit-push.sh` script will guide you in writing good commit messages following these conventions.
 
 This project utilizes and references several external tools and resources:
 
