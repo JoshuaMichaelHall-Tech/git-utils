@@ -1,9 +1,15 @@
-# System Files Cleanup Script
+# Repository Utility Scripts
 
-A zsh script to remove common system files from your Git repository, update your `.gitignore` to prevent them from being tracked in the future, and commit these changes.
+This repository contains utility scripts to help with common repository maintenance tasks:
 
-## Problem
+1. **git-clean-system-files.sh** - Remove common system files and update `.gitignore`
+2. **flatten_files.sh** - Move all files from subdirectories to a single directory
 
+## Problems & Solutions
+
+### System Files in Git Repositories
+
+#### Problem
 Various operating systems automatically create hidden system files:
 - macOS creates `.DS_Store` files in directories browsed in Finder
 - Windows creates `Thumbs.db` and other cache files
@@ -16,15 +22,39 @@ These files:
 - Cause merge conflicts when users with different operating systems work together
 - Reveal your directory structure to others when committed
 
-## Solution
-
-This script:
+#### Solution: git-clean-system-files.sh
 1. Removes all existing system files from your repository
 2. Creates a `.gitignore` file if it doesn't exist
 3. Adds common system files patterns to the `.gitignore`
 4. Commits and pushes these changes
 
+### Nested Files in Complex Directory Structures
+
+#### Problem
+- Files scattered across many subdirectories can be difficult to manage
+- Finding specific files within complex directory structures is time-consuming
+- Moving files between nested directories can disrupt relative paths
+- Analyzing or processing all files at once is challenging
+
+#### Solution: flatten_files.sh
+1. Creates a single directory to contain all files
+2. Moves all files from subdirectories into the single directory
+3. Preserves unique filenames by adding identifiers when needed
+4. Simplifies file management and analysis
+
+## Scripts
+
+### git-clean-system-files.sh
+
+Removes common system files from your Git repository, updates your `.gitignore` to prevent them from being tracked in the future, and commits these changes.
+
+### flatten_files.sh
+
+Moves all files from a directory and its subdirectories into a new directory called `current_files` in the location where the script is run. Handles naming conflicts by appending a timestamp and random number to duplicate filenames.
+
 ## Installation
+
+### git-clean-system-files.sh
 
 1. Download the script:
    ```zsh
@@ -41,7 +71,26 @@ This script:
    mv git-clean-system-files.sh /usr/local/bin/git-clean-system-files
    ```
 
+### flatten_files.sh
+
+1. Download the script:
+   ```zsh
+   curl -o flatten_files.sh https://raw.githubusercontent.com/yourusername/yourrepo/main/flatten_files.sh
+   ```
+
+2. Make it executable:
+   ```zsh
+   chmod +x flatten_files.sh
+   ```
+
+3. Optionally, move it somewhere in your PATH for easy access:
+   ```zsh
+   mv flatten_files.sh /usr/local/bin/flatten_files
+   ```
+
 ## Usage
+
+### git-clean-system-files.sh
 
 Run the script from anywhere within a Git repository:
 
@@ -55,7 +104,23 @@ Or if you moved it to your PATH:
 git-clean-system-files
 ```
 
-## What It Does
+### flatten_files.sh
+
+Run the script in the directory where you want the files to be flattened:
+
+```zsh
+./flatten_files.sh
+```
+
+Or if you moved it to your PATH:
+
+```zsh
+flatten_files
+```
+
+## What They Do
+
+### git-clean-system-files.sh
 
 The script will:
 - Check if you're in a Git repository
@@ -64,9 +129,17 @@ The script will:
 - Add system file patterns to `.gitignore`
 - Commit and push the changes
 
+### flatten_files.sh
+
+The script will:
+- Create a `current_files` directory in the current location
+- Find all files in the current directory and its subdirectories
+- Move each file to the `current_files` directory
+- Handle filename conflicts by creating unique names
+
 ## System Files Handled
 
-The script handles the following system files:
+The `git-clean-system-files.sh` script handles the following system files:
 
 ### macOS
 - `.DS_Store` - Directory metadata files
@@ -90,6 +163,8 @@ The script handles the following system files:
 
 ## Sample Output
 
+### git-clean-system-files.sh
+
 ```
 🧹 Starting system files cleanup script...
 📍 Working in git repository root: /Users/username/projects/myrepo
@@ -104,11 +179,22 @@ The script handles the following system files:
 ✨ All done! Repository cleaned and changes pushed.
 ```
 
+### flatten_files.sh
+
+```
+Files have been moved to current_files directory
+```
+
 ## Requirements
 
+### git-clean-system-files.sh
 - zsh (default shell on modern macOS)
 - Git
 - Write access to the repository
+
+### flatten_files.sh
+- zsh (default shell on modern macOS)
+- Write access to the directory
 
 ## License
 
@@ -116,4 +202,7 @@ MIT
 
 ## Author
 
-YOUR NAME HERE
+Joshua Michael Hall
+contact@joshuamichaelhall.com
+https://joshuamichaelhall.com
+
