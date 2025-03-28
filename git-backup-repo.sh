@@ -36,9 +36,14 @@ if [[ ! -d "$BACKUP_DIR" ]]; then
   
   if [[ "$create_dir" =~ ^[Yy]$ ]]; then
     mkdir -p "$BACKUP_DIR"
-    echo "✅ Created backup directory: $BACKUP_DIR"
+    if [[ $? -eq 0 ]]; then
+      echo "✅ Created backup directory: $BACKUP_DIR"
+    else
+      echo "❌ Error: Failed to create backup directory. Check permissions."
+      exit 1
+    fi
   else
-    echo "❌ Backup directory not created. Exiting."
+    echo "❌ Error: $BACKUP_DIR does not exist."
     exit 1
   fi
 else
