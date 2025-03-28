@@ -411,6 +411,56 @@ This project utilizes and references several external tools and resources:
   - Website: [https://rclone.org/](https://rclone.org/)
   - License: MIT
 
+## Known Issues and Workarounds
+
+### Passing Arguments to Scripts with run-on-all-repos.sh
+
+When using `run-on-all-repos.sh`, there's a limitation in how arguments are passed to subscripts. If you try to pass arguments to both the main script and the subscript, they may not be correctly separated.
+
+**Issue Example:**
+```zsh
+# This doesn't work as expected
+./run-on-all-repos.sh git-fix-author.sh --all --auto-respond
+```
+
+The `--all` flag is intended for `git-fix-author.sh`, but `run-on-all-repos.sh` will try to interpret it as its own flag.
+
+**Workarounds:**
+
+1. **Use wrapper scripts:** Create simple wrapper scripts that include the arguments for the subscript.
+
+   Example using the included wrapper for fixing author information:
+   ```zsh
+   # This works correctly
+   ./run-on-all-repos.sh fix-author-all.sh --auto-respond
+   ```
+   
+   The `fix-author-all.sh` wrapper script automatically runs `git-fix-author.sh --all`.
+
+2. **Quote the command with arguments:**
+   ```zsh
+   # This works if your shell supports it
+   ./run-on-all-repos.sh "git-fix-author.sh --all" --auto-respond
+   ```
+
+3. **Use environment variables** to pass settings to subscripts.
+
+### Using Default Values with git-fix-author.sh
+
+When using `git-fix-author.sh`, it will show your current Git configuration (name and email) as defaults:
+
+```
+Current git config:
+   Name: Your Name
+   Email: your.email@example.com
+```
+
+To use these defaults:
+- Simply press Enter at the prompts for new author information
+- The script will use your current Git configuration
+
+When used with `run-on-all-repos.sh --auto-respond`, you'll need to provide the answers only once, and they'll be reused for all repositories.
+
 ## Requirements
 
 - zsh (default shell on modern macOS)
