@@ -2,15 +2,18 @@
 
 # Script to run another script on all first-level subdirectories
 # With support for saving and reusing user input across repositories
-# Usage: ./run-on-all-repos.sh script_to_run.sh [--auto-respond]
+# Usage: ./run-on-all-repos.sh script_to_run.sh [--auto-respond] [--parent-dir]
 
 # Parse arguments
 AUTO_RESPOND=false
+PARENT_DIR=false
 SCRIPT_TO_RUN=""
 
 for arg in "$@"; do
   if [[ "$arg" == "--auto-respond" ]]; then
     AUTO_RESPOND=true
+  elif [[ "$arg" == "--parent-dir" ]]; then
+    PARENT_DIR=true
   elif [[ "$arg" != --* ]]; then
     SCRIPT_TO_RUN="$arg"
   fi
@@ -19,7 +22,7 @@ done
 # Check if script to run was provided
 if [[ -z "$SCRIPT_TO_RUN" ]]; then
   echo "❌ Error: Missing script parameter."
-  echo "Usage: ./run-on-all-repos.sh script_to_run.sh [--auto-respond]"
+  echo "Usage: ./run-on-all-repos.sh script_to_run.sh [--auto-respond] [--parent-dir]"
   exit 1
 fi
 
@@ -113,6 +116,15 @@ echo "🔄 Running: $SCRIPT_ABSOLUTE_PATH" | tee -a "$LOG_FILE"
 echo "📝 Logging to: $LOG_FILE" | tee -a "$LOG_FILE"
 echo "------------------------------------------------" | tee -a "$LOG_FILE"
 
+# Set the target directory (current or parent)
+TARGET_DIR="."
+if [[ "$PARENT_DIR" == true ]]; then
+  TARGET_DIR=".."
+  echo "🔍 Looking for repositories in parent directory" | tee -a "$LOG_FILE"
+else
+  echo "🔍 Looking for repositories in current directory" | tee -a "$LOG_FILE"
+fi
+
 # Counter for tracking progress
 TOTAL_DIRS=0
 PROCESSED_DIRS=0
@@ -120,14 +132,14 @@ SUCCESS_DIRS=0
 FAILED_DIRS=0
 
 # Count total first-level directories
-for dir in */; do
+for dir in "$TARGET_DIR"/*/; do
   if [[ -d "$dir" ]]; then
     ((TOTAL_DIRS++))
   fi
 done
 
 # Run the script on each first-level directory
-for dir in */; do
+for dir in "$TARGET_DIR"/*/; do
   if [[ -d "$dir" ]]; then
     dir=${dir%/}  # Remove trailing slash
     ((PROCESSED_DIRS++))

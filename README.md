@@ -27,11 +27,12 @@ All scripts use zsh (the default shell on modern macOS) and are designed to work
 Runs a script on all first-level subdirectories, with automatic input handling and logging.
 
 ```zsh
-./run-on-all-repos.sh script_to_run.sh [--auto-respond]
+./run-on-all-repos.sh script_to_run.sh [--auto-respond] [--parent-dir]
 ```
 
 **Features:**
 - Processes every first-level directory that contains a Git repository
+- Can operate on repositories in the current directory or parent directory (with `--parent-dir` flag)
 - Creates detailed logs of script output
 - Captures user input and offers to reuse answers across repositories
 - Reports success/failure statistics
@@ -49,6 +50,34 @@ cd ~/repos
 # Generate logs of all pull operations
 cd ~/repos
 ./run-on-all-repos.sh pull-from-github.sh
+
+# Run on repositories in the parent directory
+cd ~/repos/git-repository-utilities
+./run-on-all-repos.sh git-clean-system-files.sh --parent-dir
+```
+
+### run-parent-repos.sh
+
+A convenience wrapper that runs scripts on repositories in the parent directory.
+
+```zsh
+./run-parent-repos.sh script_to_run.sh [--auto-respond]
+```
+
+**Features:**
+- Automatically adds the `--parent-dir` flag to run-on-all-repos.sh
+- Useful when you want to run scripts on repositories from within the git-repository-utilities directory
+- Passes all other arguments to run-on-all-repos.sh
+
+**Example Usage:**
+```zsh
+# Run on repositories in the parent directory
+cd ~/repos/git-repository-utilities
+./run-parent-repos.sh git-clean-system-files.sh
+
+# Run with automatic response saving
+cd ~/repos/git-repository-utilities
+./run-parent-repos.sh git-prune-merged-branches.sh --auto-respond
 ```
 
 ### git-clean-system-files.sh
@@ -78,6 +107,10 @@ cd ~/repos/my-project
 # Clean and update .gitignore
 cd ~/repos/my-project
 ./git-clean-system-files.sh --update-gitignore
+
+# Clean all repositories from within the utilities repo
+cd ~/repos/git-repository-utilities
+./run-parent-repos.sh git-clean-system-files.sh
 ```
 
 ### flatten_files.sh
@@ -129,6 +162,10 @@ cd ~/repos/my-project
 # Delete branches older than 12 months
 cd ~/repos/my-project
 ./git-archive-old-branches.sh 12 --delete
+
+# Archive branches in all repositories from the utilities directory
+cd ~/repos/git-repository-utilities
+./run-parent-repos.sh git-archive-old-branches.sh 6
 ```
 
 ### git-prune-merged-branches.sh
@@ -157,6 +194,10 @@ cd ~/repos/my-project
 # Prune branches merged into a specific feature branch
 cd ~/repos/my-project
 ./git-prune-merged-branches.sh feature/authentication
+
+# Prune merged branches in all repositories
+cd ~/repos/git-repository-utilities
+./run-parent-repos.sh git-prune-merged-branches.sh
 ```
 
 ### git-cleanup-large-files.sh
@@ -182,9 +223,9 @@ cd ~/repos/my-project
 cd ~/repos/my-project
 ./git-cleanup-large-files.sh 5
 
-# Use with run-on-all-repos to scan all repositories
-cd ~/repos
-./run-on-all-repos.sh git-cleanup-large-files.sh
+# Scan all repositories for large files
+cd ~/repos/git-repository-utilities
+./run-parent-repos.sh git-cleanup-large-files.sh
 ```
 
 ### git-fix-author.sh
@@ -213,6 +254,10 @@ cd ~/repos/my-project
 # Fix author info for specific commits
 cd ~/repos/my-project
 ./git-fix-author.sh --specific
+
+# Fix author info for all repositories
+cd ~/repos/git-repository-utilities
+./run-parent-repos.sh fix-author-all.sh --auto-respond
 ```
 
 ### git-summarize-changes.sh
@@ -241,6 +286,10 @@ cd ~/repos/my-project
 # Generate a report between two specific commits
 cd ~/repos/my-project
 ./git-summarize-changes.sh a1b2c3d4 e5f6g7h8 --txt
+
+# Generate summaries for all repositories 
+cd ~/repos/git-repository-utilities
+./run-parent-repos.sh git-summarize-changes.sh v1.0.0 HEAD --markdown
 ```
 
 ### git-backup-repo.sh
@@ -272,8 +321,8 @@ cd ~/repos/my-project
 ./git-backup-repo.sh --upload
 
 # Back up all repositories
-cd ~/repos
-./run-on-all-repos.sh git-backup-repo.sh ~/backups/git-repos
+cd ~/repos/git-repository-utilities
+./run-parent-repos.sh git-backup-repo.sh ~/backups/git-repos
 ```
 
 ### git-setup-hooks.sh
@@ -301,8 +350,8 @@ cd ~/repos/my-project
 ./git-setup-hooks.sh ruby
 
 # Set up hooks for all repositories
-cd ~/repos
-./run-on-all-repos.sh git-setup-hooks.sh
+cd ~/repos/git-repository-utilities
+./run-parent-repos.sh git-setup-hooks.sh
 ```
 
 ## Remote Sync Scripts
@@ -327,8 +376,8 @@ cd ~/repos/my-project
 ./pull-from-github.sh
 
 # Pull updates for all repositories
-cd ~/repos
-./run-on-all-repos.sh pull-from-github.sh
+cd ~/repos/git-repository-utilities
+./run-parent-repos.sh pull-from-github.sh
 ```
 
 ### push-to-github.sh
@@ -352,8 +401,8 @@ cd ~/repos/my-project
 ./push-to-github.sh
 
 # Push changes from multiple repositories (be careful!)
-cd ~/repos
-./run-on-all-repos.sh push-to-github.sh --auto-respond
+cd ~/repos/git-repository-utilities
+./run-parent-repos.sh push-to-github.sh --auto-respond
 ```
 
 ## Input Handling
@@ -452,6 +501,29 @@ cd ~/repos/my-project
    source ~/.zshrc
    ```
 
+## Running Scripts from the Utilities Directory
+
+The utilities can now be run in two ways:
+
+1. **From the parent directory** (traditional method):
+   ```zsh
+   cd ~/repos
+   ./git-repository-utilities/run-on-all-repos.sh git-clean-system-files.sh
+   ```
+
+2. **From within the utilities directory** (new method):
+   ```zsh
+   cd ~/repos/git-repository-utilities
+   
+   # Option 1: Using run-on-all-repos.sh with the parent-dir flag
+   ./run-on-all-repos.sh git-clean-system-files.sh --parent-dir
+   
+   # Option 2: Using the convenience wrapper
+   ./run-parent-repos.sh git-clean-system-files.sh
+   ```
+
+Using the `--parent-dir` flag or the `run-parent-repos.sh` wrapper makes the script look for repositories in the parent directory instead of the current directory, which is useful when you want to run the utilities without having to navigate to the parent directory.
+
 ## Writing Good Commit Messages
 
 This project follows the Conventional Commits specification for commit messages. Good commit messages make your repository history more valuable and improve collaboration.
@@ -547,8 +619,8 @@ When you run `git-fix-author.sh` to correct author information, it rewrites Git 
 
 1. First, fix author information across all repositories:
    ```zsh
-   cd ~/repos
-   ./run-on-all-repos.sh fix-author-all.sh --auto-respond
+   cd ~/repos/git-repository-utilities
+   ./run-parent-repos.sh fix-author-all.sh --auto-respond
    ```
 
 2. Then, carefully force push each repository:
@@ -561,11 +633,11 @@ When you run `git-fix-author.sh` to correct author information, it rewrites Git 
    ./force-push-to-remote.sh
    
    # Option 2: Force push all repositories (use with caution!)
-   cd ~/repos
-   ./run-on-all-repos.sh force-push-to-remote.sh --auto-respond
+   cd ~/repos/git-repository-utilities
+   ./run-parent-repos.sh force-push-to-remote.sh --auto-respond
    ```
 
-> ⚠️ **Warning:** Force pushing multiple repositories automatically with `run-on-all-repos.sh` is dangerous and should only be done if you're certain about all the changes. It's recommended to review and force push each repository individually.
+> ⚠️ **Warning:** Force pushing multiple repositories automatically with `run-parent-repos.sh` is dangerous and should only be done if you're certain about all the changes. It's recommended to review and force push each repository individually.
 
 ### Passing Arguments to Scripts with run-on-all-repos.sh
 
@@ -586,7 +658,7 @@ The `--all` flag is intended for `git-fix-author.sh`, but `run-on-all-repos.sh` 
    Example using the included wrapper for fixing author information:
    ```zsh
    # This works correctly
-   ./run-on-all-repos.sh fix-author-all.sh --auto-respond
+   ./run-parent-repos.sh fix-author-all.sh --auto-respond
    ```
    
    The `fix-author-all.sh` wrapper script automatically runs `git-fix-author.sh --all`.
@@ -594,7 +666,7 @@ The `--all` flag is intended for `git-fix-author.sh`, but `run-on-all-repos.sh` 
 2. **Quote the command with arguments:**
    ```zsh
    # This works if your shell supports it
-   ./run-on-all-repos.sh "git-fix-author.sh --all" --auto-respond
+   ./run-parent-repos.sh "git-fix-author.sh --all" --auto-respond
    ```
 
 3. **Use environment variables** to pass settings to subscripts.
@@ -613,7 +685,7 @@ To use these defaults:
 - Simply press Enter at the prompts for new author information
 - The script will use your current Git configuration
 
-When used with `run-on-all-repos.sh --auto-respond`, you'll need to provide the answers only once, and they'll be reused for all repositories.
+When used with `run-parent-repos.sh --auto-respond`, you'll need to provide the answers only once, and they'll be reused for all repositories.
 
 ## Requirements
 
