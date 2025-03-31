@@ -489,10 +489,16 @@ cd ~/repos/my-project
    git clone https://github.com/yourusername/git-repository-utilities.git
    ```
 
-2. Make the scripts executable:
+2. Make the scripts executable using the provided script:
    ```zsh
    cd git-repository-utilities
-   chmod +x *.sh
+   # Option 1: Make only the scripts in this directory executable
+   chmod +x make-scripts-executable.sh
+   ./make-scripts-executable.sh
+   
+   # Option 2: Make scripts in both this directory and parent directory executable
+   chmod +x make-scripts-executable.sh
+   ./make-scripts-executable.sh --parent-dir
    ```
 
 3. Optionally, add the directory to your PATH for easy access:
@@ -500,6 +506,30 @@ cd ~/repos/my-project
    echo 'export PATH="$PATH:$HOME/tech_repos/git-repository-utilities"' >> ~/.zshrc
    source ~/.zshrc
    ```
+
+## Making Scripts Executable
+
+The repository includes a utility script to make all shell scripts executable in one step:
+
+```zsh
+./make-scripts-executable.sh
+```
+
+**Features:**
+- Makes all .sh files in the current directory executable
+- Can also process scripts in the parent directory with the `--parent-dir` flag
+- Reports a count of files processed
+
+**Example Usage:**
+```zsh
+# Make only scripts in the utilities directory executable
+cd ~/repos/git-repository-utilities
+./make-scripts-executable.sh
+
+# Make scripts in both utilities and parent directory executable
+cd ~/repos/git-repository-utilities
+./make-scripts-executable.sh --parent-dir
+```
 
 ## Running Scripts from the Utilities Directory
 
