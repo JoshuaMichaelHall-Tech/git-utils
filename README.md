@@ -20,7 +20,7 @@ This project provides a suite of scripts to help with common Git repository main
 
 All scripts use zsh (the default shell on modern macOS) and are designed to work with a terminal-centric workflow.
 
-## Main Scripts
+## Core Utility Scripts
 
 ### run-on-all-repos.sh
 
@@ -37,7 +37,8 @@ Runs a script on all first-level subdirectories, with automatic input handling a
 - Captures user input and offers to reuse answers across repositories
 - Reports success/failure statistics
 
-**Example Usage:**
+**Examples:**
+
 ```zsh
 # Run with manual confirmation for each saved response
 cd ~/repos
@@ -69,7 +70,8 @@ A convenience wrapper that runs scripts on repositories in the parent directory.
 - Useful when you want to run scripts on repositories from within the git-repository-utilities directory
 - Passes all other arguments to run-on-all-repos.sh
 
-**Example Usage:**
+**Examples:**
+
 ```zsh
 # Run on repositories in the parent directory
 cd ~/repos/git-repository-utilities
@@ -80,6 +82,30 @@ cd ~/repos/git-repository-utilities
 ./run-parent-repos.sh git-prune-merged-branches.sh --auto-respond
 ```
 
+### make-executable.sh
+
+Makes all shell scripts in the repository executable.
+
+```zsh
+./make-executable.sh [--parent-dir]
+```
+
+**Features:**
+- Finds all .sh files and sets executable permissions
+- Can process scripts in the parent directory with the `--parent-dir` flag
+
+**Examples:**
+
+```zsh
+# Make all scripts in current directory executable
+./make-executable.sh
+
+# Make scripts in both current and parent directory executable
+./make-executable.sh --parent-dir
+```
+
+## File Management Scripts
+
 ### git-clean-system-files.sh
 
 Removes common system files from Git repositories and updates `.gitignore` to prevent them from being tracked.
@@ -88,25 +114,21 @@ Removes common system files from Git repositories and updates `.gitignore` to pr
 ./git-clean-system-files.sh
 ```
 
-**Handles:**
-- macOS: `.DS_Store`, `.Spotlight-V100`, etc.
-- Windows: `Thumbs.db`, `desktop.ini`, etc.
-- Linux: `.directory`, backup files (`*~`), etc.
-- Editors: Vim swap files (`.*.swp`), etc.
+**Features:**
+- Removes typical system files that should not be tracked:
+  - macOS: `.DS_Store`, `.Spotlight-V100`, etc.
+  - Windows: `Thumbs.db`, `desktop.ini`, etc.
+  - Linux: `.directory`, backup files (`*~`), etc.
+  - Editors: Vim swap files (`.*.swp`), etc.
+- Updates .gitignore to exclude these files in the future
+- Commits and pushes the changes
 
-**Example Usage:**
+**Examples:**
+
 ```zsh
 # Clean a single repository
 cd ~/repos/my-project
 ./git-clean-system-files.sh
-
-# View files that would be removed without actually removing them
-cd ~/repos/my-project
-./git-clean-system-files.sh --dry-run
-
-# Clean and update .gitignore
-cd ~/repos/my-project
-./git-clean-system-files.sh --update-gitignore
 
 # Clean all repositories from within the utilities repo
 cd ~/repos/git-repository-utilities
@@ -118,10 +140,16 @@ cd ~/repos/git-repository-utilities
 Moves all files from a directory and its subdirectories into a single directory.
 
 ```zsh
-./flatten_files.sh
+./flatten_files.sh [directory_path]
 ```
 
-**Example Usage:**
+**Features:**
+- Recursively finds all files in subdirectories
+- Moves them to a single "current_files" directory
+- Appends unique identifiers to prevent filename collisions
+
+**Examples:**
+
 ```zsh
 # Flatten files in the current directory
 cd ~/Documents/nested-folders
@@ -129,12 +157,38 @@ cd ~/Documents/nested-folders
 
 # Flatten files in a specific directory
 ./flatten_files.sh ~/Pictures/vacation-photos
-
-# Flatten with a custom naming scheme to prevent conflicts
-./flatten_files.sh --rename-prefix="folder-"
 ```
 
-## Repository Management Scripts
+### git-cleanup-large-files.sh
+
+Identifies and removes large files from Git history to reduce repository size.
+
+```zsh
+./git-cleanup-large-files.sh [size-in-MB]
+```
+
+**Features:**
+- Finds files larger than a specified size (default: 10MB) in repository history
+- Offers to remove them using git-filter-branch or BFG Repo Cleaner
+- Creates backups before history rewriting
+
+**Examples:**
+
+```zsh
+# Find and remove files larger than 10MB (default) from a single repository
+cd ~/repos/my-project
+./git-cleanup-large-files.sh
+
+# Find and remove files larger than 50MB
+cd ~/repos/my-project
+./git-cleanup-large-files.sh 50
+
+# Clean up large files in all repositories
+cd ~/repos/git-repository-utilities
+./run-parent-repos.sh git-cleanup-large-files.sh 20
+```
+
+## Branch Management Scripts
 
 ### git-archive-old-branches.sh
 
@@ -149,7 +203,8 @@ Identifies and archives or deletes inactive branches.
 - Archives them to refs/archived/ or deletes them with confirmation
 - Protects system branches (main, master, develop, etc.)
 
-**Example Usage:**
+**Examples:**
+
 ```zsh
 # Archive branches not modified in the last 3 months
 cd ~/repos/my-project
@@ -180,52 +235,164 @@ Removes branches that have been merged into the main branch.
 - Identifies fully merged branches
 - Offers batch or selective deletion
 - Optionally removes remote branches as well
+- Automatically detects main branch if not specified
 
-**Example Usage:**
+**Examples:**
+
 ```zsh
-# Prune branches merged into main
+# Prune merged branches from a single repository
 cd ~/repos/my-project
 ./git-prune-merged-branches.sh
 
-# Prune branches merged into development
+# Specify a different main branch
 cd ~/repos/my-project
-./git-prune-merged-branches.sh development
-
-# Prune branches merged into a specific feature branch
-cd ~/repos/my-project
-./git-prune-merged-branches.sh feature/authentication
+./git-prune-merged-branches.sh develop
 
 # Prune merged branches in all repositories
 cd ~/repos/git-repository-utilities
 ./run-parent-repos.sh git-prune-merged-branches.sh
 ```
 
-### git-cleanup-large-files.sh
+## Repository Synchronization Scripts
 
-Finds and removes large files from Git history.
+### pull-from-github.sh
+
+Updates a local repository from its GitHub remote with intelligent error handling.
 
 ```zsh
-./git-cleanup-large-files.sh [size-in-MB]
+./pull-from-github.sh
 ```
 
 **Features:**
-- Identifies files larger than the specified size (default: 10MB)
-- Offers to remove them using git-filter-branch or BFG Repo Cleaner
-- Provides detailed size information
+- Handles uncommitted changes by offering to stash them
+- Deals with branches that don't exist on remote
+- Checks for remote changes and handles conflicts
 
-**Example Usage:**
+**Examples:**
+
 ```zsh
-# Find files larger than 10MB (default)
+# Pull updates for a single repository
 cd ~/repos/my-project
-./git-cleanup-large-files.sh
+./pull-from-github.sh
 
-# Find files larger than 5MB
+# Pull updates for all repositories
+cd ~/repos
+./run-on-all-repos.sh pull-from-github.sh
+```
+
+### push-to-github.sh
+
+Sends local changes to GitHub with interactive staging and conflict handling.
+
+```zsh
+./push-to-github.sh
+```
+
+**Features:**
+- Offers options for adding changes (all, specific files, interactive)
+- Handles branches without upstream
+- Detects potential conflicts with remote changes
+
+**Examples:**
+
+```zsh
+# Push changes from a single repository
 cd ~/repos/my-project
-./git-cleanup-large-files.sh 5
+./push-to-github.sh
 
-# Scan all repositories for large files
-cd ~/repos/git-repository-utilities
-./run-parent-repos.sh git-cleanup-large-files.sh
+# Push changes from all repositories
+cd ~/repos
+./run-on-all-repos.sh push-to-github.sh
+```
+
+### git-add-commit-push.sh
+
+Combines add, commit, and push operations with interactive options.
+
+```zsh
+./git-add-commit-push.sh [commit-message] [--all]
+```
+
+**Features:**
+- Offers various options for staging changes
+- Allows passing a commit message directly as an argument
+- Handles remote conflicts intelligently
+
+**Examples:**
+
+```zsh
+# Interactive add, commit, and push for a single repository
+cd ~/repos/my-project
+./git-add-commit-push.sh
+
+# Add all changes, commit with message, and push
+cd ~/repos/my-project
+./git-add-commit-push.sh "Update documentation" --all
+
+# Run on all repositories
+cd ~/repos
+./run-on-all-repos.sh git-add-commit-push.sh "Update dependencies" --all
+```
+
+### force-push-to-remote.sh
+
+Safely performs force-push operations with backup creation.
+
+```zsh
+./force-push-to-remote.sh [remote-name] [--skip-backup]
+```
+
+**Features:**
+- Creates backup bundle before force-pushing
+- Requires explicit confirmation
+- Shows differences between local and remote
+
+**Examples:**
+
+```zsh
+# Force push to origin with backup
+cd ~/repos/my-project
+./force-push-to-remote.sh
+
+# Force push to a specific remote
+cd ~/repos/my-project
+./force-push-to-remote.sh upstream
+
+# Force push without creating a backup
+cd ~/repos/my-project
+./force-push-to-remote.sh origin --skip-backup
+```
+
+## Repository Maintenance Scripts
+
+### git-backup-repo.sh
+
+Creates full or incremental backups of Git repositories.
+
+```zsh
+./git-backup-repo.sh [backup-dir] [--upload]
+```
+
+**Features:**
+- Creates complete repository backups as tar.gz and bundle files
+- Offers incremental backups to save space
+- Can upload backups to cloud storage (using rclone or scp)
+- Includes repository metadata and statistics
+
+**Examples:**
+
+```zsh
+# Create a backup of a single repository
+cd ~/repos/my-project
+./git-backup-repo.sh
+
+# Create a backup and upload it to remote storage
+cd ~/repos/my-project
+./git-backup-repo.sh ~/backups --upload
+
+# Backup all repositories
+cd ~/repos
+./run-on-all-repos.sh git-backup-repo.sh
 ```
 
 ### git-fix-author.sh
@@ -237,92 +404,77 @@ Corrects author information in Git commits.
 ```
 
 **Features:**
-- Updates author name/email for past commits
-- Fixes all commits, specific commits, or commits by a specific author
-- Handles complex Git filter-branch operations
+- Can fix all commits, specific commits, or commits by a specific author
+- Preserves commit messages and other metadata
+- Creates backups before history rewriting
 
-**Example Usage:**
+**Examples:**
+
 ```zsh
-# Fix author info interactively
+# Fix author information interactively
 cd ~/repos/my-project
 ./git-fix-author.sh
 
-# Fix author info for all commits
+# Fix all commits with incorrect author information
 cd ~/repos/my-project
 ./git-fix-author.sh --all
 
-# Fix author info for specific commits
+# Fix specific commits
 cd ~/repos/my-project
 ./git-fix-author.sh --specific
 
-# Fix author info for all repositories
+# Fix author information in all repositories
 cd ~/repos/git-repository-utilities
-./run-parent-repos.sh fix-author-all.sh --auto-respond
+./run-parent-repos.sh fix-author-wrapper.sh
+```
+
+### fix-author-wrapper.sh
+
+Wrapper script for git-fix-author.sh to use with run-on-all-repos.sh.
+
+```zsh
+./run-on-all-repos.sh fix-author-wrapper.sh --auto-respond
+```
+
+**Features:**
+- Automatically applies the fix-author operation with --all flag
+- Designed to work with run-on-all-repos.sh
+
+**Examples:**
+
+```zsh
+# Fix author information in all repositories
+cd ~/repos
+./run-on-all-repos.sh fix-author-wrapper.sh --auto-respond
 ```
 
 ### git-summarize-changes.sh
 
-Creates reports of changes between Git references.
+Creates formatted summaries of changes between Git versions.
 
 ```zsh
 ./git-summarize-changes.sh [from-ref] [to-ref] [--markdown|--txt|--html]
 ```
 
 **Features:**
-- Generates formatted changelog between two references
-- Categorizes commits (features, fixes, documentation, etc.)
-- Creates statistics on contributors, files changed, and lines added/removed
+- Generates comprehensive change reports in markdown, text, or HTML
+- Categorizes commits by type (features, bugfixes, docs, etc.)
+- Includes statistics and contributor information
 
-**Example Usage:**
-```zsh
-# Create a markdown summary between the current state and the latest tag
-cd ~/repos/my-project
-./git-summarize-changes.sh $(git describe --tags --abbrev=0) HEAD
-
-# Create an HTML report for a release
-cd ~/repos/my-project
-./git-summarize-changes.sh v1.0.0 v2.0.0 --html
-
-# Generate a report between two specific commits
-cd ~/repos/my-project
-./git-summarize-changes.sh a1b2c3d4 e5f6g7h8 --txt
-
-# Generate summaries for all repositories 
-cd ~/repos/git-repository-utilities
-./run-parent-repos.sh git-summarize-changes.sh v1.0.0 HEAD --markdown
-```
-
-### git-backup-repo.sh
-
-Creates full backups of Git repositories.
+**Examples:**
 
 ```zsh
-./git-backup-repo.sh [backup-dir] [--upload]
-```
-
-**Features:**
-- Makes complete backups including all branches and history
-- Supports full and incremental backups
-- Implements retention policies
-- Optionally uploads to remote storage (rclone, SCP)
-
-**Example Usage:**
-```zsh
-# Create a backup with default settings
+# Generate a changelog between two tags
 cd ~/repos/my-project
-./git-backup-repo.sh
+./git-summarize-changes.sh v1.0 v1.1
 
-# Specify a backup directory
+# Generate HTML-formatted changelog
 cd ~/repos/my-project
-./git-backup-repo.sh ~/backups/git-repos
+./git-summarize-changes.sh HEAD~50 HEAD --html
 
-# Create a backup and upload it to remote storage
-cd ~/repos/my-project
-./git-backup-repo.sh --upload
-
-# Back up all repositories
-cd ~/repos/git-repository-utilities
-./run-parent-repos.sh git-backup-repo.sh ~/backups/git-repos
+# Generate changelogs for all repositories
+cd ~/repos
+./run-on-all-repos.sh git-summarize-changes.sh HEAD~20 HEAD
 ```
 
 ### git-setup-hooks.sh
@@ -334,401 +486,81 @@ Installs useful Git hooks for code quality.
 ```
 
 **Features:**
-- Sets up pre-commit hooks for linting and formatting
-- Configures commit message templates
-- Adds safeguards for protected branches
+- Creates pre-commit hooks for linting and formatting
+- Sets up commit message validation
+- Prevents accidental pushes to protected branches
 - Supports multiple programming languages
 
-**Example Usage:**
+**Examples:**
+
 ```zsh
-# Set up hooks with automatic language detection
+# Set up Git hooks for a Ruby repository
+cd ~/repos/my-ruby-project
+./git-setup-hooks.sh ruby
+
+# Automatically detect language and set up hooks
 cd ~/repos/my-project
 ./git-setup-hooks.sh
 
-# Set up hooks for a specific language
-cd ~/repos/my-project
-./git-setup-hooks.sh ruby
-
 # Set up hooks for all repositories
-cd ~/repos/git-repository-utilities
-./run-parent-repos.sh git-setup-hooks.sh
+cd ~/repos
+./run-on-all-repos.sh git-setup-hooks.sh
 ```
 
-## Remote Sync Scripts
-
-### pull-from-github.sh
-
-Updates a local repository from its GitHub remote.
-
-```zsh
-./pull-from-github.sh
-```
-
-**Features:**
-- Handles uncommitted changes (stash, commit, abort)
-- Manages branches that don't exist on remote
-- Safely restores stashed changes after pull
-
-**Example Usage:**
-```zsh
-# Pull updates for the current repository
-cd ~/repos/my-project
-./pull-from-github.sh
-
-# Pull updates for all repositories
-cd ~/repos/git-repository-utilities
-./run-parent-repos.sh pull-from-github.sh
-```
-
-### push-to-github.sh
-
-Updates a GitHub repository from local changes.
-
-```zsh
-./push-to-github.sh
-```
-
-**Features:**
-- Interactive file selection
-- Supports adding all, specific, or interactive staging
-- Detects conflicts with remote changes
-- Handles upstream configuration
-
-**Example Usage:**
-```zsh
-# Push changes from the current repository
-cd ~/repos/my-project
-./push-to-github.sh
-
-# Push changes from multiple repositories (be careful!)
-cd ~/repos/git-repository-utilities
-./run-parent-repos.sh push-to-github.sh --auto-respond
-```
-
-## Input Handling
+## Utility Scripts for Multi-Repository Operations
 
 ### input-capture.sh
 
-Standalone script for running commands with input capturing across repositories.
+Advanced script for capturing and reusing user input across multiple repositories.
 
 ```zsh
 ./input-capture.sh
 ```
 
-**Example Usage:**
+**Features:**
+- More sophisticated alternative to run-on-all-repos.sh
+- Captures and saves all user inputs
+- Creates wrapper scripts to reuse responses
+
+**Examples:**
+
 ```zsh
-# Run the script and follow the interactive prompts
+# Run with input capture
 cd ~/repos
 ./input-capture.sh
+# Then follow the prompts to specify which script to run
 ```
 
-### force-push-to-remote.sh
+### input-handler.sh
 
-Safely force-pushes changes to a remote repository with backup and confirmation steps.
+Helper script for transforming scripts to use automated input handling.
 
 ```zsh
-./force-push-to-remote.sh [remote-name] [--skip-backup]
+./input-handler.sh script_to_modify responses_file
 ```
 
 **Features:**
-- Creates a backup before pushing
-- Shows changes that will be pushed
-- Requires explicit confirmation
-- Verifies repository and remote
-- Reports success or failure
+- Transforms scripts to use automated input handling
+- Creates a processed version of the script with input handling
 
-**Example Usage:**
-```zsh
-# Basic usage (pushes to origin)
-cd ~/repos/my-project
-./force-push-to-remote.sh
-
-# Push to a different remote
-cd ~/repos/my-project
-./force-push-to-remote.sh upstream
-
-# Skip the backup creation
-cd ~/repos/my-project
-./force-push-to-remote.sh origin --skip-backup
-```
-
-### git-add-commit-push.sh
-
-Combines add, commit, and push operations into a single interactive workflow.
+**Examples:**
 
 ```zsh
-./git-add-commit-push.sh [commit-message] [--all]
+# Process a script for automated input handling
+./input-handler.sh git-clean-system-files.sh ~/responses.txt
 ```
 
-**Features:**
-- Flexible add options (all, tracked only, specific files, interactive)
-- Interactive status checks and confirmations
-- Handles upstream branch configuration
-- Detects and addresses potential conflicts
-- Provides clear feedback at each step
+## Acknowledgements
 
-**Example Usage:**
-```zsh
-# Basic interactive usage
-cd ~/repos/my-project
-./git-add-commit-push.sh
+This project was developed with assistance from Anthropic's Claude AI assistant, which helped with:
+- Documentation writing and organization
+- Code structure suggestions
+- Troubleshooting and debugging assistance
 
-# Provide commit message directly
-cd ~/repos/my-project
-./git-add-commit-push.sh "feat: add user authentication"
+Claude was used as a development aid while all final implementation decisions and code review were performed by Joshua Michael Hall.
 
-# Add all changes and provide commit message
-cd ~/repos/my-project
-./git-add-commit-push.sh "fix: resolve navigation bug" --all
-```
+## Disclaimer
 
-## Installation
+These scripts are provided "as is", without warranty of any kind. Use them at your own risk. The author is not responsible for any data loss or damage caused by the use of these scripts. Always make backups before performing operations that modify Git history.
 
-1. Clone this repository:
-   ```zsh
-   git clone https://github.com/yourusername/git-repository-utilities.git
-   ```
-
-2. Make the scripts executable using the provided script:
-   ```zsh
-   cd git-repository-utilities
-   # Option 1: Make only the scripts in this directory executable
-   chmod +x make-scripts-executable.sh
-   ./make-scripts-executable.sh
-   
-   # Option 2: Make scripts in both this directory and parent directory executable
-   chmod +x make-scripts-executable.sh
-   ./make-scripts-executable.sh --parent-dir
-   ```
-
-3. Optionally, add the directory to your PATH for easy access:
-   ```zsh
-   echo 'export PATH="$PATH:$HOME/tech_repos/git-repository-utilities"' >> ~/.zshrc
-   source ~/.zshrc
-   ```
-
-## Making Scripts Executable
-
-The repository includes a utility script to make all shell scripts executable in one step:
-
-```zsh
-./make-scripts-executable.sh
-```
-
-**Features:**
-- Makes all .sh files in the current directory executable
-- Can also process scripts in the parent directory with the `--parent-dir` flag
-- Reports a count of files processed
-
-**Example Usage:**
-```zsh
-# Make only scripts in the utilities directory executable
-cd ~/repos/git-repository-utilities
-./make-scripts-executable.sh
-
-# Make scripts in both utilities and parent directory executable
-cd ~/repos/git-repository-utilities
-./make-scripts-executable.sh --parent-dir
-```
-
-## Running Scripts from the Utilities Directory
-
-The utilities can now be run in two ways:
-
-1. **From the parent directory** (traditional method):
-   ```zsh
-   cd ~/repos
-   ./git-repository-utilities/run-on-all-repos.sh git-clean-system-files.sh
-   ```
-
-2. **From within the utilities directory** (new method):
-   ```zsh
-   cd ~/repos/git-repository-utilities
-   
-   # Option 1: Using run-on-all-repos.sh with the parent-dir flag
-   ./run-on-all-repos.sh git-clean-system-files.sh --parent-dir
-   
-   # Option 2: Using the convenience wrapper
-   ./run-parent-repos.sh git-clean-system-files.sh
-   ```
-
-Using the `--parent-dir` flag or the `run-parent-repos.sh` wrapper makes the script look for repositories in the parent directory instead of the current directory, which is useful when you want to run the utilities without having to navigate to the parent directory.
-
-## Writing Good Commit Messages
-
-This project follows the Conventional Commits specification for commit messages. Good commit messages make your repository history more valuable and improve collaboration.
-
-### Commit Message Format
-
-```
-<type>(<scope>): <subject>
-
-<body>
-
-<footer>
-```
-
-### Types
-
-- **feat**: A new feature
-- **fix**: A bug fix
-- **docs**: Documentation changes
-- **style**: Formatting changes (white-space, formatting, etc.)
-- **refactor**: Code change that neither fixes a bug nor adds a feature
-- **perf**: Code change that improves performance
-- **test**: Adding or modifying tests
-- **chore**: Changes to the build process or auxiliary tools
-- **ci**: Changes to CI configuration files and scripts
-
-### Guidelines
-
-1. **Be concise and specific**:
-   - Good: `feat(auth): add email validation to login form`
-   - Bad: `updated some files`
-
-2. **Use imperative mood**:
-   - Good: `fix: remove unused variables`
-   - Bad: `fixed unused variables`
-
-3. **First line should be 50 characters or less**
-
-4. **Explain "why" in the body**, not just "what"
-
-5. **Reference issues/tickets in footer**:
-   ```
-   fix(nav): ensure dropdown closes on blur
-
-   Previously the dropdown would remain open when clicking elsewhere,
-   causing confusion and potential data loss.
-
-   Fixes #123
-   ```
-
-The `git-add-commit-push.sh` script will guide you in writing good commit messages following these conventions.
-
-This project utilizes and references several external tools and resources:
-
-- **BFG Repo-Cleaner**: The `git-cleanup-large-files.sh` script offers integration with the BFG Repo-Cleaner by Roberto Tyley, a faster alternative to git-filter-branch for removing large files.
-  - Website: [https://rtyley.github.io/bfg-repo-cleaner/](https://rtyley.github.io/bfg-repo-cleaner/)
-  - License: GPL-3.0
-
-- **Git Documentation**: Many scripts are based on best practices from the official Git documentation.
-  - Website: [https://git-scm.com/doc](https://git-scm.com/doc)
-
-- **ShellCheck**: Recommended for validating shell scripts, and used in the `git-setup-hooks.sh` script.
-  - Website: [https://www.shellcheck.net/](https://www.shellcheck.net/)
-  - License: GPL-3.0
-
-- **rclone**: Used in the `git-backup-repo.sh` script for cloud storage uploads.
-  - Website: [https://rclone.org/](https://rclone.org/)
-  - License: MIT
-
-## Using git-fix-author.sh with force-push-to-remote.sh
-
-When you run `git-fix-author.sh` to correct author information, it rewrites Git history which requires a force push to update remote repositories. The `force-push-to-remote.sh` script provides a safer way to perform this operation.
-
-### Single Repository Workflow:
-
-1. Fix author information:
-   ```zsh
-   cd ~/repos/my-project
-   ./git-fix-author.sh --all
-   ```
-
-2. Review the changes:
-   ```zsh
-   git log --oneline
-   ```
-
-3. Force push with safety measures:
-   ```zsh
-   ./force-push-to-remote.sh
-   ```
-
-### Multiple Repositories Workflow:
-
-1. First, fix author information across all repositories:
-   ```zsh
-   cd ~/repos/git-repository-utilities
-   ./run-parent-repos.sh fix-author-all.sh --auto-respond
-   ```
-
-2. Then, carefully force push each repository:
-   ```zsh
-   # Option 1: Review and push each repository individually (recommended)
-   cd ~/repos/repo1
-   ./force-push-to-remote.sh
-   
-   cd ~/repos/repo2
-   ./force-push-to-remote.sh
-   
-   # Option 2: Force push all repositories (use with caution!)
-   cd ~/repos/git-repository-utilities
-   ./run-parent-repos.sh force-push-to-remote.sh --auto-respond
-   ```
-
-> ⚠️ **Warning:** Force pushing multiple repositories automatically with `run-parent-repos.sh` is dangerous and should only be done if you're certain about all the changes. It's recommended to review and force push each repository individually.
-
-### Passing Arguments to Scripts with run-on-all-repos.sh
-
-When using `run-on-all-repos.sh`, there's a limitation in how arguments are passed to subscripts. If you try to pass arguments to both the main script and the subscript, they may not be correctly separated.
-
-**Issue Example:**
-```zsh
-# This doesn't work as expected
-./run-on-all-repos.sh git-fix-author.sh --all --auto-respond
-```
-
-The `--all` flag is intended for `git-fix-author.sh`, but `run-on-all-repos.sh` will try to interpret it as its own flag.
-
-**Workarounds:**
-
-1. **Use wrapper scripts:** Create simple wrapper scripts that include the arguments for the subscript.
-
-   Example using the included wrapper for fixing author information:
-   ```zsh
-   # This works correctly
-   ./run-parent-repos.sh fix-author-all.sh --auto-respond
-   ```
-   
-   The `fix-author-all.sh` wrapper script automatically runs `git-fix-author.sh --all`.
-
-2. **Quote the command with arguments:**
-   ```zsh
-   # This works if your shell supports it
-   ./run-parent-repos.sh "git-fix-author.sh --all" --auto-respond
-   ```
-
-3. **Use environment variables** to pass settings to subscripts.
-
-### Using Default Values with git-fix-author.sh
-
-When using `git-fix-author.sh`, it will show your current Git configuration (name and email) as defaults:
-
-```
-Current git config:
-   Name: Your Name
-   Email: your.email@example.com
-```
-
-To use these defaults:
-- Simply press Enter at the prompts for new author information
-- The script will use your current Git configuration
-
-When used with `run-parent-repos.sh --auto-respond`, you'll need to provide the answers only once, and they'll be reused for all repositories.
-
-## Requirements
-
-- zsh (default shell on modern macOS)
-- Git
-- Write access to the repositories
-
-## License
-
-MIT
-
-## Author
-
-Joshua Michael Hall
-contact@joshuamichaelhall.com
-https://joshuamichaelhall.com
+If you encounter any issues or have suggestions for improvements, please open an issue on the GitHub repository.
