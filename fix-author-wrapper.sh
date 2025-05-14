@@ -2,18 +2,29 @@
 
 # Wrapper script for git-fix-author.sh to use with run-on-all-repos.sh
 # This script automatically applies the fix-author operation with --all flag
-# Usage: ./run-on-all-repos.sh fix-author-all.sh --auto-respond
+# Usage: ./run-on-all-repos.sh fix-author-wrapper.sh --auto-respond
 
-# Find the actual location of git-fix-author.sh
-# First check if it's in the same directory as this script
+# Find the git-fix-author.sh script - works whether run from git-repository-utilities or parent dir
+SCRIPT_NAME="git-fix-author.sh"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [[ -f "$SCRIPT_DIR/git-fix-author.sh" ]]; then
-  FIX_AUTHOR_SCRIPT="$SCRIPT_DIR/git-fix-author.sh"
-# Otherwise check if it's in the PATH
-elif command -v git-fix-author.sh &> /dev/null; then
-  FIX_AUTHOR_SCRIPT="$(command -v git-fix-author.sh)"
+
+# Try local directory first
+if [[ -f "$SCRIPT_DIR/$SCRIPT_NAME" ]]; then
+  FIX_AUTHOR_SCRIPT="$SCRIPT_DIR/$SCRIPT_NAME"
+# Then try the git-repository-utilities dir if run from parent 
+elif [[ -f "$SCRIPT_DIR/git-repository-utilities/$SCRIPT_NAME" ]]; then
+  FIX_AUTHOR_SCRIPT="$SCRIPT_DIR/git-repository-utilities/$SCRIPT_NAME"
+# Finally try parent directory if run from git-repository-utilities
+elif [[ -f "$SCRIPT_DIR/../$SCRIPT_NAME" ]]; then
+  FIX_AUTHOR_SCRIPT="$SCRIPT_DIR/../$SCRIPT_NAME"
 else
-  echo "❌ Error: git-fix-author.sh not found in directory or PATH"
+  # If all else fails, try to find it in PATH
+  FIX_AUTHOR_SCRIPT=$(which "$SCRIPT_NAME" 2>/dev/null)
+fi
+
+# Check if the script exists
+if [[ ! -f "$FIX_AUTHOR_SCRIPT" ]]; then
+  echo "❌ Error: git-fix-author.sh not found at $FIX_AUTHOR_SCRIPT"
   exit 1
 fi
 
@@ -27,7 +38,33 @@ echo "   Name: $CURRENT_NAME"
 echo "   Email: $CURRENT_EMAIL"
 echo ""
 
-# Run the fix-author script with the --all flag
-# The script will handle the prompts for name/email and we rely on auto-respond
-# from run-on-all-repos.sh to handle the responses
-"$FIX_AUTHOR_SCRIPT" --all
+# Create a temporary expect script to automatically answer 'yes' to the confirmation prompt
+TEMP_EXPECT_SCRIPT=$(mktemp)
+
+cat > "$TEMP_EXPECT_SCRIPT" << 'EOF'
+#!/usr/bin/expect -f
+set timeout -1
+spawn $env(FIX_AUTHOR_SCRIPT) --all
+
+# Handle name/email prompts
+expect "New Name (default:"
+send "\r"
+expect "New Email (default:"
+send "\r"
+
+# Handle confirmation prompt
+expect "Are you sure you want to proceed? (y/n):"
+send "y\r"
+
+# Stay for the rest of the process
+expect eof
+EOF
+
+chmod +x "$TEMP_EXPECT_SCRIPT"
+
+# Run the expect script with the environment variable for the fix-author script
+export FIX_AUTHOR_SCRIPT
+"$TEMP_EXPECT_SCRIPT"
+
+# Clean up
+rm -f "$TEMP_EXPECT_SCRIPT"

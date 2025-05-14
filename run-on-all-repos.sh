@@ -48,7 +48,15 @@ if [[ ! -x "$SCRIPT_TO_RUN" ]]; then
 fi
 
 # Get the absolute path of the script
-SCRIPT_ABSOLUTE_PATH=$(realpath "$SCRIPT_TO_RUN")
+# Use fallback for systems without realpath
+if command -v realpath >/dev/null 2>&1; then
+  SCRIPT_ABSOLUTE_PATH=$(realpath "$SCRIPT_TO_RUN")
+else
+  # Fallback for macOS or systems without realpath
+  SCRIPT_DIR=$(cd "$(dirname "$SCRIPT_TO_RUN")" && pwd)
+  SCRIPT_NAME=$(basename "$SCRIPT_TO_RUN")
+  SCRIPT_ABSOLUTE_PATH="$SCRIPT_DIR/$SCRIPT_NAME"
+fi
 
 # Create a temporary directory for saved responses
 TEMP_DIR=$(mktemp -d)

@@ -92,6 +92,16 @@ case $MODE in
       exit 0
     fi
     
+    # Check if the author information is already correct
+    ALL_AUTHORS=$(git log --format='%an <%ae>' | sort | uniq)
+    CURRENT_AUTHOR="$NEW_NAME <$NEW_EMAIL>"
+    
+    if [[ $(echo "$ALL_AUTHORS" | wc -l) -eq 1 && "$ALL_AUTHORS" == "$CURRENT_AUTHOR" ]]; then
+      echo "✅ All commits already have the correct author information: $CURRENT_AUTHOR"
+      echo "❓ No changes were needed."
+      exit 0
+    fi
+    
     echo "🔄 Rewriting all commits with new author information..."
     git filter-branch --env-filter "
       export GIT_AUTHOR_NAME='$NEW_NAME'
@@ -125,14 +135,21 @@ case $MODE in
     for INDEX in "${SELECTED_INDICES[@]}"; do
       if [[ $INDEX -le ${#COMMITS[@]} && $INDEX -gt 0 ]]; then
         COMMIT_HASH=$(echo ${COMMITS[$INDEX-1]} | cut -d' ' -f1)
-        COMMITS_TO_FIX+=($COMMIT_HASH)
+        AUTHOR=$(git show -s --format='%an <%ae>' $COMMIT_HASH)
+        CURRENT_AUTHOR="$NEW_NAME <$NEW_EMAIL>"
+        
+        if [[ "$AUTHOR" == "$CURRENT_AUTHOR" ]]; then
+          echo "ℹ️  Commit $COMMIT_HASH already has the correct author: $CURRENT_AUTHOR. Skipping."
+        else
+          COMMITS_TO_FIX+=($COMMIT_HASH)
+        fi
       else
         echo "⚠️  Invalid selection: $INDEX. Skipping."
       fi
     done
     
     if [[ ${#COMMITS_TO_FIX[@]} -eq 0 ]]; then
-      echo "❌ No valid commits selected. Exiting."
+      echo "❓ No changes needed. All selected commits already have the correct author information."
       exit 0
     fi
     
@@ -191,7 +208,27 @@ case $MODE in
     fi
     
     if [[ ${#COMMITS[@]} -eq 0 ]]; then
-      echo "❌ No commits found with the specified author. Exiting."
+      echo "❓ No commits found with the specified author. No changes needed."
+      exit 0
+    fi
+    
+    # Check if all these commits already have the new author info
+    CURRENT_AUTHOR="$NEW_NAME <$NEW_EMAIL>"
+    ALL_MATCH=true
+    
+    for COMMIT in "${COMMITS[@]}"; do
+      COMMIT_HASH=$(echo $COMMIT | cut -d' ' -f1)
+      AUTHOR=$(git show -s --format='%an <%ae>' $COMMIT_HASH)
+      
+      if [[ "$AUTHOR" != "$CURRENT_AUTHOR" ]]; then
+        ALL_MATCH=false
+        break
+      fi
+    done
+    
+    if [[ "$ALL_MATCH" == true ]]; then
+      echo "✅ All commits by the specified author already have the correct author information: $CURRENT_AUTHOR"
+      echo "❓ No changes needed."
       exit 0
     fi
     
@@ -201,7 +238,7 @@ case $MODE in
     if [[ ${#COMMITS[@]} -gt 10 ]]; then
       echo "Displaying first 10 commits:"
       display_commits "${COMMITS[@]:0:10}"
-      echo "... and ${#COMMITS[@]-10} more."
+      echo "... and $((${#COMMITS[@]}-10)) more."
     else
       display_commits "${COMMITS[@]}"
     fi

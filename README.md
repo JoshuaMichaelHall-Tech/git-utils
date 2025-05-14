@@ -20,6 +20,28 @@ This project provides a suite of scripts to help with common Git repository main
 
 All scripts use zsh (the default shell on modern macOS) and are designed to work with a terminal-centric workflow.
 
+## Path Handling and Script Usage
+
+The scripts in this collection can be used in two ways:
+
+1. **Individual Repository Mode**: Run scripts directly inside a specific repository
+   ```zsh
+   cd ~/repos/my-project
+   ~/repos/git-repository-utilities/git-fix-author.sh
+   # or if git-repository-utilities is in your PATH
+   git-fix-author.sh
+   ```
+
+2. **Batch Mode**: Run scripts on multiple repositories from a parent directory
+   ```zsh
+   cd ~/repos
+   ./git-repository-utilities/run-on-all-repos.sh git-repository-utilities/git-clean-system-files.sh
+   ```
+
+All scripts use relative paths instead of absolute paths, allowing them to be used from any location. The scripts intelligently determine their locations relative to each other, making them flexible for various directory structures.
+
+Helper scripts like `fix-author-wrapper.sh` automatically locate their dependencies whether run from within the utilities directory or from a parent directory containing multiple repositories.
+
 ## Core Utility Scripts
 
 ### run-on-all-repos.sh
@@ -280,6 +302,67 @@ cd ~/repos
 ./run-on-all-repos.sh pull-from-github.sh
 ```
 
+### batch-pull-from-github.sh
+
+Pulls updates for multiple repositories from GitHub in batch mode.
+
+```zsh
+./batch-pull-from-github.sh [path/to/root/directory] [--auto-stash]
+```
+
+**Features:**
+- Processes all git repositories found in a directory
+- Tracks successful and failed operations
+- Can automatically stash uncommitted changes with the `--auto-stash` flag
+- Handles branches that don't exist on remote
+- Provides detailed summary of operations
+
+**Examples:**
+
+```zsh
+# Pull updates for all repositories in current directory
+cd ~/repos
+./batch-pull-from-github.sh
+
+# Pull updates for repositories in a specific directory
+./batch-pull-from-github.sh ~/projects
+
+# Pull updates with automatic stashing of changes
+./batch-pull-from-github.sh ~/repos --auto-stash
+```
+
+### patch-rebase-pull-from-github.sh
+
+Pull updates using a patch-rebase strategy that preserves local changes.
+
+```zsh
+./patch-rebase-pull-from-github.sh [--create-patch] [--apply-only]
+```
+
+**Features:**
+- Creates a patch of local changes before pulling
+- Updates the codebase with remote changes
+- Reapplies local changes on top of the updated codebase
+- Can be used to just create a patch (with `--create-patch`)
+- Can be used to just apply a previously created patch (with `--apply-only`)
+- Useful when you have local changes and want to incorporate upstream changes
+
+**Examples:**
+
+```zsh
+# Perform patch-rebase-pull operation
+cd ~/repos/my-project
+./patch-rebase-pull-from-github.sh
+
+# Only create a patch file of local changes
+cd ~/repos/my-project
+./patch-rebase-pull-from-github.sh --create-patch
+
+# Apply a previously created patch
+cd ~/repos/my-project
+./patch-rebase-pull-from-github.sh --apply-only
+```
+
 ### push-to-github.sh
 
 Sends local changes to GitHub with interactive staging and conflict handling.
@@ -292,6 +375,7 @@ Sends local changes to GitHub with interactive staging and conflict handling.
 - Offers options for adding changes (all, specific files, interactive)
 - Handles branches without upstream
 - Detects potential conflicts with remote changes
+- Properly reports when no changes are needed
 
 **Examples:**
 
@@ -303,6 +387,66 @@ cd ~/repos/my-project
 # Push changes from all repositories
 cd ~/repos
 ./run-on-all-repos.sh push-to-github.sh
+```
+
+### batch-push-to-github.sh
+
+Non-interactive version of push-to-github.sh for automated batch operations.
+
+```zsh
+./batch-push-to-github.sh [commit-message]
+```
+
+**Features:**
+- Automatically adds all changes without prompting
+- Uses provided commit message or a default message
+- Handles potential conflicts by automatically pulling changes
+- Ideal for use with run-on-all-repos.sh for batch updates
+- Properly reports when no changes are needed
+
+**Examples:**
+
+```zsh
+# Push all changes from a single repository with default message
+cd ~/repos/my-project
+./batch-push-to-github.sh
+
+# Push all changes with a custom commit message
+cd ~/repos/my-project
+./batch-push-to-github.sh "Update documentation"
+
+# Push changes from all repositories with the same message
+cd ~/repos
+./run-on-all-repos.sh batch-push-to-github.sh "Update dependencies" --auto-respond
+```
+
+### batch-force-push-to-github.sh
+
+Force pushes multiple repositories to GitHub in batch mode.
+
+```zsh
+./batch-force-push-to-github.sh [path/to/root/directory] [--no-backup]
+```
+
+**Features:**
+- Processes all git repositories found in a directory
+- Creates backups before force pushing (unless `--no-backup` is specified)
+- Tracks successful, failed, and skipped operations
+- Shows detailed summary of operations
+- Warns about potential data loss and requires explicit confirmation
+
+**Examples:**
+
+```zsh
+# Force push all repositories in current directory
+cd ~/repos
+./batch-force-push-to-github.sh
+
+# Force push repositories in a specific directory
+./batch-force-push-to-github.sh ~/projects
+
+# Force push without creating backups
+./batch-force-push-to-github.sh ~/repos --no-backup
 ```
 
 ### git-add-commit-push.sh
