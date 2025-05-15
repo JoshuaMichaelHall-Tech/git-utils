@@ -7,9 +7,16 @@
 # Set defaults
 ROOT_DIR=${1:-$(pwd)}
 AUTO_STASH=false
-if [[ "$2" == "--auto-stash" ]]; then
-  AUTO_STASH=true
-fi
+AUTO_CONFIRM=false
+
+# Process arguments
+for arg in "$@"; do
+  if [[ "$arg" == "--auto-stash" ]]; then
+    AUTO_STASH=true
+  elif [[ "$arg" == "--yes" || "$arg" == "-y" ]]; then
+    AUTO_CONFIRM=true
+  fi
+done
 
 echo "⬇️  Batch Pull from GitHub ⬇️"
 echo "=============================="
@@ -37,7 +44,9 @@ echo ""
 
 # Process each repository
 SUCCESS_COUNT=0
+FAILED_COUNT=0
 FAILED_REPOS=()
+SKIPPED_COUNT=0
 SKIPPED_REPOS=()
 
 for repo in "${REPOS[@]}"; do
@@ -62,6 +71,7 @@ for repo in "${REPOS[@]}"; do
     else
       echo "    ⚠️  Uncommitted changes present. Skipping repository."
       SKIPPED_REPOS+=("$REPO_NAME (uncommitted changes)")
+      ((SKIPPED_COUNT++))
       popd > /dev/null
       continue
     fi
@@ -73,6 +83,7 @@ for repo in "${REPOS[@]}"; do
   if ! git ls-remote --heads origin $CURRENT_BRANCH | grep -q $CURRENT_BRANCH; then
     echo "    ⚠️  Branch '$CURRENT_BRANCH' does not exist on remote. Skipping."
     SKIPPED_REPOS+=("$REPO_NAME (no remote branch)")
+    ((SKIPPED_COUNT++))
     popd > /dev/null
     continue
   fi
@@ -102,6 +113,7 @@ for repo in "${REPOS[@]}"; do
   else
     echo "    ❌ Pull failed."
     FAILED_REPOS+=("$REPO_NAME")
+    ((FAILED_COUNT++))
   fi
   
   # Return to original directory
@@ -114,20 +126,27 @@ echo "📊 Batch Pull Summary:"
 echo "======================="
 echo "✅ Successfully processed: $SUCCESS_COUNT/$REPO_COUNT repositories"
 
-if [[ ${#SKIPPED_REPOS[@]} -gt 0 ]]; then
-  echo "⏩ Skipped repositories: ${#SKIPPED_REPOS[@]}"
+if [[ $SKIPPED_COUNT -gt 0 ]]; then
+  echo "⏩ Skipped repositories: $SKIPPED_COUNT"
   for repo in "${SKIPPED_REPOS[@]}"; do
     echo "   - $repo"
   done
 fi
 
-if [[ ${#FAILED_REPOS[@]} -gt 0 ]]; then
-  echo "❌ Failed repositories: ${#FAILED_REPOS[@]}"
+if [[ $FAILED_COUNT -gt 0 ]]; then
+  echo "❌ Failed repositories: $FAILED_COUNT"
   for repo in "${FAILED_REPOS[@]}"; do
     echo "   - $repo"
   done
   echo ""
   echo "Please check error messages above or process these repositories individually."
+fi
+
+# Verify that our counts match up with the total
+if [[ $((SUCCESS_COUNT + SKIPPED_COUNT + FAILED_COUNT)) -ne $REPO_COUNT ]]; then
+  echo "⚠️  Warning: Count mismatch detected!"
+  echo "   Total repositories: $REPO_COUNT"
+  echo "   Success + Skipped + Failed = $((SUCCESS_COUNT + SKIPPED_COUNT + FAILED_COUNT))"
 fi
 
 echo ""

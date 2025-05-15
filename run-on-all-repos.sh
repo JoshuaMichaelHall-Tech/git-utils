@@ -226,6 +226,12 @@ echo "   🔢 Total repositories found: $TOTAL_DIRS" | tee -a "$LOG_FILE"
 echo "   ✅ Successfully processed: $SUCCESS_DIRS" | tee -a "$LOG_FILE"
 echo "   ❌ Failed: $FAILED_DIRS" | tee -a "$LOG_FILE"
 echo "   ⚠️  Skipped: $((TOTAL_DIRS - SUCCESS_DIRS - FAILED_DIRS))" | tee -a "$LOG_FILE"
+
+# Check if summary doesn't match individual results - this is a sanity check
+if [[ $((SUCCESS_DIRS + FAILED_DIRS)) -eq 0 && $PROCESSED_DIRS -gt 0 ]]; then
+  echo "⚠️  Warning: Counter mismatch detected. Actual successful operations may be higher than reported." | tee -a "$LOG_FILE"
+  echo "   Corrected summary: $PROCESSED_DIRS repositories were processed." | tee -a "$LOG_FILE"
+fi
 echo "" | tee -a "$LOG_FILE"
 echo "📝 Log file saved to: $LOG_FILE" | tee -a "$LOG_FILE"
 echo "✨ All done at $(date)!" | tee -a "$LOG_FILE"

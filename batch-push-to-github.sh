@@ -7,6 +7,14 @@
 # Default commit message if none provided
 DEFAULT_COMMIT_MSG="Batch update via script"
 COMMIT_MSG=${1:-$DEFAULT_COMMIT_MSG}
+AUTO_CONFIRM=false
+
+# Process arguments
+for arg in "$@"; do
+  if [[ "$arg" == "--yes" || "$arg" == "-y" ]]; then
+    AUTO_CONFIRM=true
+  fi
+done
 
 # Check if we're in a git repository
 if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then

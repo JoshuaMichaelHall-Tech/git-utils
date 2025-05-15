@@ -307,7 +307,7 @@ cd ~/repos
 Pulls updates for multiple repositories from GitHub in batch mode.
 
 ```zsh
-./batch-pull-from-github.sh [path/to/root/directory] [--auto-stash]
+./batch-pull-from-github.sh [path/to/root/directory] [--auto-stash] [--yes|-y]
 ```
 
 **Features:**
@@ -329,6 +329,9 @@ cd ~/repos
 
 # Pull updates with automatic stashing of changes
 ./batch-pull-from-github.sh ~/repos --auto-stash
+
+# Pull updates with automatic confirmation
+./batch-pull-from-github.sh ~/repos --yes
 ```
 
 ### patch-rebase-pull-from-github.sh
@@ -394,7 +397,7 @@ cd ~/repos
 Non-interactive version of push-to-github.sh for automated batch operations.
 
 ```zsh
-./batch-push-to-github.sh [commit-message]
+./batch-push-to-github.sh [commit-message] [--yes|-y]
 ```
 
 **Features:**
@@ -418,6 +421,10 @@ cd ~/repos/my-project
 # Push changes from all repositories with the same message
 cd ~/repos
 ./run-on-all-repos.sh batch-push-to-github.sh "Update dependencies" --auto-respond
+
+# Push changes with automatic confirmation
+cd ~/repos/my-project
+./batch-push-to-github.sh "Update documentation" --yes
 ```
 
 ### batch-force-push-to-github.sh
@@ -425,7 +432,7 @@ cd ~/repos
 Force pushes multiple repositories to GitHub in batch mode.
 
 ```zsh
-./batch-force-push-to-github.sh [path/to/root/directory] [--no-backup]
+./batch-force-push-to-github.sh [path/to/root/directory] [--no-backup] [--yes|-y]
 ```
 
 **Features:**
@@ -434,6 +441,7 @@ Force pushes multiple repositories to GitHub in batch mode.
 - Tracks successful, failed, and skipped operations
 - Shows detailed summary of operations
 - Warns about potential data loss and requires explicit confirmation
+- Accepts `--yes` or `-y` flag to auto-confirm all prompts (useful for scripts)
 
 **Examples:**
 
@@ -447,6 +455,9 @@ cd ~/repos
 
 # Force push without creating backups
 ./batch-force-push-to-github.sh ~/repos --no-backup
+
+# Force push with automatic confirmation (no prompts)
+./batch-force-push-to-github.sh ~/repos --yes
 ```
 
 ### git-add-commit-push.sh
@@ -483,7 +494,7 @@ cd ~/repos
 Safely performs force-push operations with backup creation.
 
 ```zsh
-./force-push-to-remote.sh [remote-name] [--skip-backup]
+./force-push-to-remote.sh [remote-name] [--skip-backup] [--yes|-y]
 ```
 
 **Features:**
@@ -505,6 +516,10 @@ cd ~/repos/my-project
 # Force push without creating a backup
 cd ~/repos/my-project
 ./force-push-to-remote.sh origin --skip-backup
+
+# Force push with automatic confirmation (no prompts)
+cd ~/repos/my-project
+./force-push-to-remote.sh origin --yes
 ```
 
 ## Repository Maintenance Scripts

@@ -20,9 +20,16 @@ CURRENT_BRANCH=$(git branch --show-current)
 # Parse arguments
 REMOTE_NAME=${1:-origin}  # Default to "origin" if not specified
 SKIP_BACKUP=false
-if [[ "$2" == "--skip-backup" ]]; then
-  SKIP_BACKUP=true
-fi
+AUTO_CONFIRM=false
+
+# Process all arguments
+for arg in "$@"; do
+  if [[ "$arg" == "--skip-backup" ]]; then
+    SKIP_BACKUP=true
+  elif [[ "$arg" == "--yes" || "$arg" == "-y" ]]; then
+    AUTO_CONFIRM=true
+  fi
+done
 
 echo "📍 Repository: $REPO_NAME"
 echo "📍 Current branch: $CURRENT_BRANCH"
@@ -52,11 +59,17 @@ if [[ "$SKIP_BACKUP" == false ]]; then
     echo "✅ Backup created: $BACKUP_FILE"
   else
     echo "❌ Backup failed. Do you want to continue without a backup?"
-    read "continue?Continue anyway? (y/n): "
     
-    if [[ ! "$continue" =~ ^[Yy]$ ]]; then
-      echo "❌ Force push aborted."
-      exit 1
+    if [[ "$AUTO_CONFIRM" != true ]]; then
+      echo -n "Continue anyway? (yes/y/no/n): "
+      read continue
+      
+      if [[ ! "$continue" =~ ^(yes|y)$ ]]; then
+        echo "❌ Force push aborted."
+        exit 1
+      fi
+    else
+      echo "⚠️  Auto-confirmed with --yes flag. Continuing without backup."
     fi
   fi
 else
@@ -73,11 +86,17 @@ echo ""
 echo "⚠️  WARNING: Force pushing will overwrite the remote repository's history."
 echo "    This is a destructive operation and cannot be undone."
 echo "    Any changes on the remote that aren't in your local repository will be lost."
-read "confirm?Are you absolutely sure you want to force push? (yes/no): "
 
-if [[ "$confirm" != "yes" ]]; then
-  echo "❌ Force push aborted."
-  exit 1
+if [[ "$AUTO_CONFIRM" != true ]]; then
+  echo -n "Are you absolutely sure you want to force push? (yes/y/no/n): "
+  read confirm
+
+  if [[ ! "$confirm" =~ ^(yes|y)$ ]]; then
+    echo "❌ Force push aborted."
+    exit 1
+  fi
+else
+  echo "⚠️  Auto-confirmed with --yes flag. Proceeding with force push."
 fi
 
 # Perform the force push
